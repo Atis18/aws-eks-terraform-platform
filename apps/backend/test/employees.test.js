@@ -164,3 +164,167 @@ test("GET /api/employees/:id returns 404 when not found", async (t) => {
     });
   });
 });
+
+test("POST /api/employees creates an employee", async (t) => {
+  const created = "2026-10-20T14:00:00.000Z";
+  const equipmentId = "66227f26-85d0-478d-bc4e-86cf09949250";
+
+  t.mock.method(pool, "query", async (sql, params) => {
+    if (/SELECT id FROM equipments/i.test(sql)) {
+      assert.deepEqual(params, ["Laptop"]);
+
+      return {
+        rows: [{ id: equipmentId }],
+      };
+    }
+
+    assert.match(sql, /INSERT INTO employees/i);
+    assert.deepEqual(params, [
+      "Peter",
+      null,
+      "Nagy",
+      "Backend Developer",
+      "Junior",
+      equipmentId,
+    ]);
+
+    return {
+      rows: [{
+        id: employeeId,
+        first_name: "Peter",
+        middle_name: null,
+        last_name: "Nagy",
+        full_name: "peter nagy",
+        position: "Backend Developer",
+        level: "Junior",
+        created,
+      }],
+    };
+  });
+
+  await withServer(async (url) => {
+    const response = await fetch(`${url}/api/employees`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: {
+          firstName: "Peter",
+          lastName: "Nagy",
+        },
+        position: "Backend Developer",
+        level: "Junior",
+        equipment: "Laptop",
+      }),
+    });
+
+    assert.equal(response.status, 201);
+
+    assert.deepEqual(await response.json(), {
+      id: employeeId,
+      name: {
+        firstName: "Peter",
+        middleName: "",
+        lastName: "Nagy",
+      },
+      fullName: "peter nagy",
+      position: "Backend Developer",
+      level: "Junior",
+      equipment: "Laptop",
+      created,
+    });
+  });
+});
+
+test("POST /api/employees rejects invalid data", async (t) => {
+  const query = t.mock.method(pool, "query", async () => {
+    throw new Error("Database should not be called");
+  });
+
+  await withServer(async (url) => {
+    const response = await fetch(`${url}/api/employees`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: {
+          firstName: "",
+          lastName: "Nagy",
+        },
+        position: "Developer",
+        level: "Junior",
+      }),
+    });
+
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), {
+      error: "Invalid employee data.",
+    });
+    assert.equal(query.mock.callCount(), 0);
+  });
+});
+
+test("POST /api/employees rejects unknown equipment", async (t) => {
+  const query = t.mock.method(pool, "query", async () => ({
+    rows: [],
+  }));
+
+  await withServer(async (url) => {
+    const response = await fetch(`${url}/api/employees`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: {
+          firstName: "Peter",
+          lastName: "Nagy",
+        },
+        position: "Developer",
+        level: "Junior",
+        equipment: "Unknown Device",
+      }),
+    });
+
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), {
+      error: "Unknown equipment.",
+    });
+    assert.equal(query.mock.callCount(), 1);
+  });
+});
+
+test("POST /api/employees allows no equipment", async (t) => {
+  const query = t.mock.method(pool, "query", async (sql, params) => {
+    assert.match(sql, /INSERT INTO employees/i);
+    assert.equal(params[5], null);
+
+    return {
+      rows: [{
+        id: employeeId,
+        first_name: "Peter",
+        middle_name: null,
+        last_name: "Nagy",
+        full_name: "peter nagy",
+        position: "Developer",
+        level: "Junior",
+        created: "2026-10-20T14:00:00.000Z",
+      }],
+    };
+  });
+
+  await withServer(async (url) => {
+    const response = await fetch(`${url}/api/employees`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: {
+          firstName: "Peter",
+          lastName: "Nagy",
+        },
+        position: "Developer",
+        level: "Junior",
+      }),
+    });
+
+    assert.equal(response.status, 201);
+    assert.equal((await response.json()).equipment, "N/A");
+    assert.equal(query.mock.callCount(), 1);
+  });
+});

@@ -316,4 +316,110 @@ app.get("/api/employees/:id", async (req, res) => {
   }
 });
 
+app.post("/api/employees", async (req, res) => {
+  const { name, position, level, equipment } = req.body ?? {};
+
+  const validText = (value, maxLength) =>
+    typeof value === "string" &&
+    value.trim().length > 0 &&
+    value.trim().length <= maxLength;
+
+  if (
+    !name ||
+    typeof name !== "object" ||
+    Array.isArray(name) ||
+    !validText(name.firstName, 100) ||
+    !validText(name.lastName, 100) ||
+    (name.middleName != null &&
+      (typeof name.middleName !== "string" ||
+        name.middleName.trim().length > 100)) ||
+    !validText(position, 100) ||
+    !validText(level, 100) ||
+    (equipment != null &&
+      (typeof equipment !== "string" ||
+        equipment.trim().length > 150))
+  ) {
+    return res.status(400).json({
+      error: "Invalid employee data.",
+    });
+  }
+
+  const equipmentName = equipment?.trim() ?? "";
+  let equipmentId = null;
+
+  try {
+    if (equipmentName && equipmentName !== "N/A") {
+      const matches = await pool.query(
+        "SELECT id FROM equipments WHERE name = $1 LIMIT 2",
+        [equipmentName]
+      );
+
+      if (matches.rows.length === 0) {
+        return res.status(400).json({
+          error: "Unknown equipment.",
+        });
+      }
+
+      if (matches.rows.length > 1) {
+        return res.status(409).json({
+          error: "Equipment name is ambiguous.",
+        });
+      }
+
+      equipmentId = matches.rows[0].id;
+    }
+
+    const result = await pool.query(
+      `INSERT INTO employees (
+         first_name,
+         middle_name,
+         last_name,
+         position,
+         level,
+         equipment_id
+       )
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING
+         id,
+         first_name,
+         middle_name,
+         last_name,
+         full_name,
+         position,
+         level,
+         created`,
+      [
+        name.firstName.trim(),
+        name.middleName?.trim() || null,
+        name.lastName.trim(),
+        position.trim(),
+        level.trim(),
+        equipmentId,
+      ]
+    );
+
+    const row = result.rows[0];
+
+    return res.status(201).json({
+      id: row.id,
+      name: {
+        firstName: row.first_name,
+        middleName: row.middle_name ?? "",
+        lastName: row.last_name,
+      },
+      fullName: row.full_name,
+      position: row.position,
+      level: row.level,
+      equipment: equipmentId ? equipmentName : "N/A",
+      created: row.created,
+    });
+  } catch (error) {
+    console.error("Failed to create employee:", error);
+
+    return res.status(500).json({
+      error: "Failed to create employee.",
+    });
+  }
+});
+
 export default app;
