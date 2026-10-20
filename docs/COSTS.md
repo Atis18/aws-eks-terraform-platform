@@ -80,6 +80,33 @@ An idle infrastructure still incurs charges for many **provisioned** resources. 
 
 **Sources:** [Amazon EKS pricing](https://aws.amazon.com/eks/pricing/), [EC2 On-Demand pricing](https://aws.amazon.com/ec2/pricing/on-demand/), [EBS pricing](https://aws.amazon.com/ebs/pricing/), [AWS Pricing Calculator](https://calculator.aws/).
 
+
+## 3. EKS Add-ons — EBS CSI and Pod Identity
+
+**Terraform components:** `terraform/eks.tf`, `terraform/ebs-csi.tf`
+
+**Architecture:** EKS Pod Identity Agent, Amazon EBS CSI Driver and an IAM role using `AmazonEBSCSIDriverPolicyV2`.
+
+### Provisioned resources and idle baseline
+
+| Resource | Quantity | Unit price | 1 hour | 8 hours | 24 hours | 30 days (720h) |
+|---|---:|---:|---:|---:|---:|---:|
+| EKS Pod Identity Agent | 1 add-on | No additional fixed charge | $0 | $0 | $0 | $0 |
+| Amazon EBS CSI Driver | 1 add-on | No additional fixed charge | $0 | $0 | $0 | $0 |
+| IAM role and policy attachment | 1 each | No additional fixed charge | $0 | $0 | $0 | $0 |
+| Additional EBS volumes | 0 currently | Usage-based | $0 | $0 | $0 | $0 |
+| **Add-ons subtotal** | | | **$0** | **$0** | **$0** | **$0** |
+
+### Notes
+
+- These add-ons do not introduce a separate fixed subscription or hourly charge.
+- The add-ons consume resources on the existing worker nodes.
+- Dynamically provisioned EBS volumes will incur storage charges when PersistentVolumeClaims are created.
+- The worker-node root EBS volumes are already included in the EKS cost estimate.
+- Related monitoring, logging and data-transfer charges are excluded.
+
+**Sources:** [Amazon EKS pricing](https://aws.amazon.com/eks/pricing/), [Amazon EBS pricing](https://aws.amazon.com/ebs/pricing/), [AWS EBS CSI Driver documentation](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html).
+
 ### Combined infrastructure baseline
 
 | Component | Hourly | 8 hours | 24 hours | 30 days |
