@@ -259,4 +259,61 @@ app.get("/api/employees", async (_req, res) => {
   }
 });
 
+app.get("/api/employees/:id", async (req, res) => {
+  const { id } = req.params;
+
+  if (!uuidPattern.test(id)) {
+    return res.status(400).json({
+      error: "Invalid employee ID.",
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT
+         e.id,
+         e.first_name,
+         e.middle_name,
+         e.last_name,
+         e.full_name,
+         e.position,
+         e.level,
+         COALESCE(eq.name, 'N/A') AS equipment,
+         e.created
+       FROM employees e
+       LEFT JOIN equipments eq ON eq.id = e.equipment_id
+       WHERE e.id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: "Employee not found.",
+      });
+    }
+
+    const row = result.rows[0];
+
+    return res.json({
+      id: row.id,
+      name: {
+        firstName: row.first_name,
+        middleName: row.middle_name ?? "",
+        lastName: row.last_name,
+      },
+      fullName: row.full_name,
+      position: row.position,
+      level: row.level,
+      equipment: row.equipment,
+      created: row.created,
+    });
+  } catch (error) {
+    console.error("Failed to load employee:", error);
+
+    return res.status(500).json({
+      error: "Failed to load employee.",
+    });
+  }
+});
+
 export default app;
