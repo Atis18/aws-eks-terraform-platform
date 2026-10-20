@@ -53,6 +53,40 @@ An idle infrastructure still incurs charges for many **provisioned** resources. 
 
 **Sources:** [Amazon VPC pricing](https://aws.amazon.com/vpc/pricing/), [AWS NAT Gateway pricing guide](https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateway-pricing.html), [AWS public IPv4 pricing](https://aws.amazon.com/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/), [AWS Pricing Calculator](https://calculator.aws/).
 
+## 2. EKS Cluster and Managed Node Group
+
+**Terraform component:** `terraform/eks.tf` (`terraform-aws-modules/eks/aws`)
+
+**Architecture:** One EKS cluster running Kubernetes 1.36 with standard support, one managed node group spanning two Availability Zones, and two `m6i.large` EC2 instances at idle capacity.
+
+### Provisioned resources and idle baseline
+
+| Resource | Quantity | Unit price | Base cost / hour | 8 hours | 24 hours | 30 days (720h) |
+|---|---:|---:|---:|---:|---:|---:|
+| EKS control plane | 1 | $0.100 / cluster-hour | $0.100 | $0.80 | $2.40 | $72.00 |
+| EC2 `m6i.large` | 2 | ~$0.115 / instance-hour | $0.230 | $1.84 | $5.52 | $165.60 |
+| EBS gp3 root volumes | 60 GiB | ~$0.0952 / GiB-month | ~$0.0079 | $0.06 | $0.19 | $5.71 |
+| Managed node group, IAM roles and security groups | Multiple | No additional fixed hourly charge | $0 | $0 | $0 | $0 |
+| **EKS subtotal** | | | **~$0.338** | **$2.70** | **$8.11** | **$243.31** |
+
+### Notes
+
+- The baseline assumes two running On-Demand worker nodes (`desired_size = 2`). Costs increase if the node group scales out.
+- The node group allows 2–4 nodes, but an autoscaling controller must be configured separately.
+- EBS pricing assumes two encrypted, 30 GiB gp3 root volumes with default performance.
+- The core EKS addons do not have a separate fixed addon subscription fee; related AWS usage may still be chargeable.
+- CloudWatch log ingestion, storage, data transfer and any additional usage-based charges are excluded.
+- Prices are estimates and should be rechecked before deployment.
+
+**Sources:** [Amazon EKS pricing](https://aws.amazon.com/eks/pricing/), [EC2 On-Demand pricing](https://aws.amazon.com/ec2/pricing/on-demand/), [EBS pricing](https://aws.amazon.com/ebs/pricing/), [AWS Pricing Calculator](https://calculator.aws/).
+
+### Combined infrastructure baseline
+
+| Component | Hourly | 8 hours | 24 hours | 30 days |
+|---|---:|---:|---:|---:|
+| VPC and networking | $0.114 | $0.91 | $2.74 | $82.08 |
+| EKS and node group | ~$0.338 | $2.70 | $8.11 | $243.31 |
+| **Total** | **~$0.452** | **$3.62** | **$10.85** | **$325.39** |
 
 ## Cost controls and teardown
 
