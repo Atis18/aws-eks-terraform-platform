@@ -159,13 +159,47 @@ Pod Identity association for the Cluster Autoscaler.
 **Sources:** [Amazon EKS pricing](https://aws.amazon.com/eks/pricing/),
 [AWS EKS autoscaling best practices](https://aws.github.io/aws-eks-best-practices/cluster-autoscaling/).
 
+## 6. RDS PostgreSQL — Multi-AZ
+
+**Terraform component:** `terraform/rds.tf`
+
+**Architecture:** One private Amazon RDS PostgreSQL 17 Multi-AZ DB instance (`db.t4g.medium`) with a primary and standby in separate Availability Zones, 20 GiB gp3 storage, encryption at rest, and an RDS-managed master password in AWS Secrets Manager.
+
+### Provisioned resources and idle baseline
+
+| Resource | Quantity | Unit price | Base cost / hour | 8 hours | 24 hours | 30 days (720h) |
+|---|---:|---:|---:|---:|---:|---:|
+| RDS PostgreSQL Multi-AZ DB instance | 1 deployment (primary + standby) | ~$0.149 / deployment-hour | $0.149 | $1.19 | $3.58 | $107.28 |
+| RDS Multi-AZ gp3 storage | 20 GiB provisioned | ~$0.274 / GiB-month | ~$0.0076 | $0.06 | $0.18 | $5.48 |
+| Secrets Manager — master credentials | 1 secret | ~$0.40 / secret-month | ~$0.0006 | < $0.01 | $0.01 | $0.40 |
+| Security group and ingress rule | 1 each | No additional fixed charge | $0 | $0 | $0 | $0 |
+| Existing database subnet group | 1 | Already covered by VPC configuration | $0 | $0 | $0 | $0 |
+| **RDS subtotal** | | | **~$0.157** | **$1.26** | **$3.77** | **$113.16** |
+
+### Notes
+
+- This is a Multi-AZ DB instance deployment with one non-readable standby, not a Multi-AZ DB cluster with two readable standbys.
+- The database has no public endpoint access. PostgreSQL connections are permitted from the EKS worker-node security group only.
+- Storage encryption and IAM database authentication are enabled.
+- The master password is managed by RDS through Secrets Manager; Secrets Manager API requests are excluded.
+- Additional storage, CPU-credit charges if applicable, backup storage beyond the included allowance, and other variable charges are excluded.
+- The estimate assumes two AZs and the specified On-Demand instance class.
+- `skip_final_snapshot = true` and disabled deletion protection are intended only for this temporary portfolio environment.
+- Regional rates are approximate and must be confirmed in AWS Pricing Calculator before deployment.
+
+**Sources:** [Amazon RDS for PostgreSQL pricing](https://aws.amazon.com/rds/postgresql/pricing/), [AWS Secrets Manager pricing](https://aws.amazon.com/secrets-manager/pricing/), [AWS Pricing Calculator](https://calculator.aws/).
+
 ### Combined infrastructure baseline
 
-| Component | Hourly | 8 hours | 24 hours | 30 days |
+| Component | Hourly | 8 hours | 24 hours | 30 days (720h) |
 |---|---:|---:|---:|---:|
 | VPC and networking | $0.114 | $0.91 | $2.74 | $82.08 |
-| EKS and node group | ~$0.338 | $2.70 | $8.11 | $243.31 |
-| **Total** | **~$0.452** | **$3.62** | **$10.85** | **$325.39** |
+| EKS and managed node group | ~$0.338 | $2.70 | $8.11 | $243.31 |
+| EKS addons and controller IAM configuration | $0 | $0 | $0 | $0 |
+| RDS PostgreSQL Multi-AZ | ~$0.157 | $1.26 | $3.77 | $113.16 |
+| **Total** | **~$0.609** | **$4.87** | **$14.62** | **$438.55** |
+
+Totals represent estimated provisioned idle resources, excluding usage-based charges and components not yet configured.
 
 ## Cost controls and teardown
 
