@@ -107,6 +107,31 @@ An idle infrastructure still incurs charges for many **provisioned** resources. 
 
 **Sources:** [Amazon EKS pricing](https://aws.amazon.com/eks/pricing/), [Amazon EBS pricing](https://aws.amazon.com/ebs/pricing/), [AWS EBS CSI Driver documentation](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html).
 
+## 4. AWS Load Balancer Controller — IAM preparation
+
+**Terraform component:** `terraform/load-balancer-controller.tf`
+
+**Architecture:** Dedicated IAM role, controller-specific IAM policy and EKS Pod Identity association.
+
+### Provisioned resources and idle baseline
+
+| Resource | Quantity | Unit price | 1 hour | 8 hours | 24 hours | 30 days (720h) |
+|---|---:|---:|---:|---:|---:|---:|
+| IAM role | 1 | No additional charge | $0 | $0 | $0 | $0 |
+| IAM policy and attachment | 1 each | No additional charge | $0 | $0 | $0 | $0 |
+| EKS Pod Identity association | 1 | No additional charge | $0 | $0 | $0 | $0 |
+| **Subtotal** | | | **$0** | **$0** | **$0** | **$0** |
+
+### Notes
+
+- This step only configures AWS permissions for the controller.
+- The Kubernetes controller itself will be installed later using Helm.
+- No Application Load Balancer is provisioned at this stage.
+- ALB hourly charges, LCU usage and related public IPv4 charges will be documented when an ALB is configured.
+- The controller will use the existing EKS worker-node capacity.
+
+**Sources:** [AWS Load Balancer Controller documentation](https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html), [AWS Elastic Load Balancing pricing](https://aws.amazon.com/elasticloadbalancing/pricing/).
+
 ### Combined infrastructure baseline
 
 | Component | Hourly | 8 hours | 24 hours | 30 days |
