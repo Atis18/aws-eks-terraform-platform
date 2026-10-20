@@ -422,4 +422,183 @@ app.post("/api/employees", async (req, res) => {
   }
 });
 
+app.patch("/api/employees/:id", async (req, res) => {
+  const { id } = req.params;
+  const data = req.body;
+
+  if (!uuidPattern.test(id)) {
+    return res.status(400).json({
+      error: "Invalid employee ID.",
+    });
+  }
+
+  const allowedFields = ["name", "position", "level", "equipment"];
+
+  if (
+    !data ||
+    typeof data !== "object" ||
+    Array.isArray(data) ||
+    Object.keys(data).length === 0 ||
+    Object.keys(data).some((key) => !allowedFields.includes(key))
+  ) {
+    return res.status(400).json({
+      error: "Invalid employee data.",
+    });
+  }
+
+  const { name, position, level, equipment } = data;
+
+  const validText = (value, maxLength) =>
+    typeof value === "string" &&
+    value.trim().length > 0 &&
+    value.trim().length <= maxLength;
+
+  if (name !== undefined) {
+    const allowedNameFields = [
+      "firstName",
+      "middleName",
+      "lastName",
+    ];
+
+    if (
+      !name ||
+      typeof name !== "object" ||
+      Array.isArray(name) ||
+      Object.keys(name).length === 0 ||
+      Object.keys(name).some(
+        (key) => !allowedNameFields.includes(key)
+      ) ||
+      (name.firstName !== undefined &&
+        !validText(name.firstName, 100)) ||
+      (name.lastName !== undefined &&
+        !validText(name.lastName, 100)) ||
+      (name.middleName !== undefined &&
+        name.middleName !== null &&
+        (typeof name.middleName !== "string" ||
+          name.middleName.trim().length > 100))
+    ) {
+      return res.status(400).json({
+        error: "Invalid employee data.",
+      });
+    }
+  }
+
+  const hasEquipment = Object.hasOwn(data, "equipment");
+
+  if (
+    (position !== undefined && !validText(position, 100)) ||
+    (level !== undefined && !validText(level, 100)) ||
+    (hasEquipment &&
+      equipment !== null &&
+      (typeof equipment !== "string" ||
+        equipment.trim().length > 150))
+  ) {
+    return res.status(400).json({
+      error: "Invalid employee data.",
+    });
+  }
+
+  let equipmentId = null;
+
+  try {
+    if (
+      hasEquipment &&
+      equipment?.trim() &&
+      equipment.trim() !== "N/A"
+    ) {
+      const matches = await pool.query(
+        "SELECT id FROM equipments WHERE name = $1 LIMIT 2",
+        [equipment.trim()]
+      );
+
+      if (matches.rows.length === 0) {
+        return res.status(400).json({
+          error: "Unknown equipment.",
+        });
+      }
+
+      if (matches.rows.length > 1) {
+        return res.status(409).json({
+          error: "Equipment name is ambiguous.",
+        });
+      }
+
+      equipmentId = matches.rows[0].id;
+    }
+
+    const result = await pool.query(
+      `WITH updated AS (
+         UPDATE employees
+         SET
+           first_name = COALESCE($2, first_name),
+           middle_name = CASE
+             WHEN $3::boolean THEN $4
+             ELSE middle_name
+           END,
+           last_name = COALESCE($5, last_name),
+           position = COALESCE($6, position),
+           level = COALESCE($7, level),
+           equipment_id = CASE
+             WHEN $8::boolean THEN $9::uuid
+             ELSE equipment_id
+           END
+         WHERE id = $1
+         RETURNING *
+       )
+       SELECT
+         u.id,
+         u.first_name,
+         u.middle_name,
+         u.last_name,
+         u.full_name,
+         u.position,
+         u.level,
+         COALESCE(eq.name, 'N/A') AS equipment,
+         u.created
+       FROM updated u
+       LEFT JOIN equipments eq ON eq.id = u.equipment_id`,
+      [
+        id,
+        name?.firstName?.trim() ?? null,
+        name !== undefined &&
+          Object.hasOwn(name, "middleName"),
+        name?.middleName?.trim() || null,
+        name?.lastName?.trim() ?? null,
+        position?.trim() ?? null,
+        level?.trim() ?? null,
+        hasEquipment,
+        equipmentId,
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: "Employee not found.",
+      });
+    }
+
+    const row = result.rows[0];
+
+    return res.json({
+      id: row.id,
+      name: {
+        firstName: row.first_name,
+        middleName: row.middle_name ?? "",
+        lastName: row.last_name,
+      },
+      fullName: row.full_name,
+      position: row.position,
+      level: row.level,
+      equipment: row.equipment,
+      created: row.created,
+    });
+  } catch (error) {
+    console.error("Failed to update employee:", error);
+
+    return res.status(500).json({
+      error: "Failed to update employee.",
+    });
+  }
+});
+
 export default app;

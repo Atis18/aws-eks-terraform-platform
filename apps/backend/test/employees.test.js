@@ -328,3 +328,171 @@ test("POST /api/employees allows no equipment", async (t) => {
     assert.equal(query.mock.callCount(), 1);
   });
 });
+
+test("PATCH /api/employees/:id updates level", async (t) => {
+  t.mock.method(pool, "query", async (sql, params) => {
+    assert.match(sql, /UPDATE employees/i);
+    assert.deepEqual(params, [
+      employeeId,
+      null, false, null, null, null, "Medior", false, null,
+    ]);
+
+    return {
+      rows: [{
+        id: employeeId,
+        first_name: "Peter",
+        middle_name: null,
+        last_name: "Nagy",
+        full_name: "peter nagy",
+        position: "Developer",
+        level: "Medior",
+        equipment: "Laptop",
+        created: "2026-10-20T14:00:00.000Z",
+      }],
+    };
+  });
+
+  await withServer(async (url) => {
+    const response = await fetch(
+      `${url}/api/employees/${employeeId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ level: "Medior" }),
+      }
+    );
+
+    assert.equal(response.status, 200);
+
+    const employee = await response.json();
+    assert.equal(employee.level, "Medior");
+    assert.equal(employee.name.firstName, "Peter");
+    assert.equal(employee.equipment, "Laptop");
+  });
+});
+
+test("PATCH /api/employees/:id updates first name", async (t) => {
+  t.mock.method(pool, "query", async (sql, params) => {
+    assert.match(sql, /UPDATE employees/i);
+    assert.deepEqual(params, [
+      employeeId,
+      "Bela", false, null, null, null, null, false, null,
+    ]);
+
+    return {
+      rows: [{
+        id: employeeId,
+        first_name: "Bela",
+        middle_name: null,
+        last_name: "Nagy",
+        full_name: "bela nagy",
+        position: "Developer",
+        level: "Junior",
+        equipment: "Laptop",
+        created: "2026-10-20T14:00:00.000Z",
+      }],
+    };
+  });
+
+  await withServer(async (url) => {
+    const response = await fetch(
+      `${url}/api/employees/${employeeId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: { firstName: "Bela" },
+        }),
+      }
+    );
+
+    assert.equal(response.status, 200);
+
+    const employee = await response.json();
+    assert.equal(employee.name.firstName, "Bela");
+    assert.equal(employee.fullName, "bela nagy");
+  });
+});
+
+test("PATCH /api/employees/:id removes equipment", async (t) => {
+  t.mock.method(pool, "query", async (sql, params) => {
+    assert.match(sql, /UPDATE employees/i);
+    assert.deepEqual(params, [
+      employeeId,
+      null, false, null, null, null, null, true, null,
+    ]);
+
+    return {
+      rows: [{
+        id: employeeId,
+        first_name: "Peter",
+        middle_name: null,
+        last_name: "Nagy",
+        full_name: "peter nagy",
+        position: "Developer",
+        level: "Junior",
+        equipment: "N/A",
+        created: "2026-10-20T14:00:00.000Z",
+      }],
+    };
+  });
+
+  await withServer(async (url) => {
+    const response = await fetch(
+      `${url}/api/employees/${employeeId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ equipment: null }),
+      }
+    );
+
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).equipment, "N/A");
+  });
+});
+
+test("PATCH /api/employees/:id rejects invalid level", async (t) => {
+  const query = t.mock.method(pool, "query", async () => {
+    throw new Error("Database should not be called");
+  });
+
+  await withServer(async (url) => {
+    const response = await fetch(
+      `${url}/api/employees/${employeeId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ level: "" }),
+      }
+    );
+
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), {
+      error: "Invalid employee data.",
+    });
+    assert.equal(query.mock.callCount(), 0);
+  });
+});
+
+test("PATCH /api/employees/:id returns 404 when not found", async (t) => {
+  t.mock.method(pool, "query", async () => ({
+    rows: [],
+  }));
+
+  await withServer(async (url) => {
+    const response = await fetch(
+      `${url}/api/employees/${employeeId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ level: "Medior" }),
+      }
+    );
+
+    assert.equal(response.status, 404);
+    assert.deepEqual(await response.json(), {
+      error: "Employee not found.",
+    });
+  });
+});
