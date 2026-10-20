@@ -40,3 +40,82 @@ test("GET /api/equipments returns equipment list", async (t) => {
     });
   }
 });
+
+test("POST /api/equipments creates equipment", async (t) => {
+  const equipment = {
+    id: "test-uuid",
+    name: "Monitor",
+    type: "Display",
+    amount: 2,
+    created: "2026-10-20T12:00:00.000Z",
+  };
+
+  t.mock.method(pool, "query", async (sql, params) => {
+    assert.match(sql, /INSERT INTO equipments/i);
+    assert.deepEqual(params, ["Monitor", "Display", 2]);
+
+    return { rows: [equipment] };
+  });
+
+  const server = app.listen(0, "127.0.0.1");
+
+  try {
+    await once(server, "listening");
+
+    const response = await fetch(
+      `http://127.0.0.1:${server.address().port}/api/equipments`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Monitor",
+          type: "Display",
+          amount: 2,
+        }),
+      }
+    );
+
+    assert.equal(response.status, 201);
+    assert.deepEqual(await response.json(), equipment);
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => error ? reject(error) : resolve());
+    });
+  }
+});
+
+test("POST /api/equipments rejects negative amount", async (t) => {
+  const query = t.mock.method(pool, "query", async () => {
+    throw new Error("Database should not be called");
+  });
+
+  const server = app.listen(0, "127.0.0.1");
+
+  try {
+    await once(server, "listening");
+
+    const response = await fetch(
+      `http://127.0.0.1:${server.address().port}/api/equipments`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Monitor",
+          type: "Display",
+          amount: -5,
+        }),
+      }
+    );
+
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), {
+      error: "Invalid equipment data.",
+    });
+
+    assert.equal(query.mock.callCount(), 0);
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => error ? reject(error) : resolve());
+    });
+  }
+});
