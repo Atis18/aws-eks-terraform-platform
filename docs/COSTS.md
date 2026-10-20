@@ -189,6 +189,35 @@ Pod Identity association for the Cluster Autoscaler.
 
 **Sources:** [Amazon RDS for PostgreSQL pricing](https://aws.amazon.com/rds/postgresql/pricing/), [AWS Secrets Manager pricing](https://aws.amazon.com/secrets-manager/pricing/), [AWS Pricing Calculator](https://calculator.aws/).
 
+## 7. Amazon ECR — Private Container Repositories
+
+**Terraform component:** `terraform/ecr.tf`
+
+**Architecture:** Two private ECR repositories for the frontend and backend Docker images, with immutable image tags, AES-256 encryption, scan-on-push and lifecycle policies retaining the 10 most recent images per repository.
+
+### Provisioned resources and idle baseline
+
+| Resource | Quantity | Unit price | Base cost / hour | 8 hours | 24 hours | 30 days (720h) |
+|---|---:|---:|---:|---:|---:|---:|
+| Private ECR repositories | 2 | No fixed repository charge | $0 | $0 | $0 | $0 |
+| Image storage | 0 GiB initially | ~$0.10 / GB-month | $0 | $0 | $0 | $0 |
+| Lifecycle policies | 2 | No additional fixed charge | $0 | $0 | $0 | $0 |
+| AES-256 repository encryption | 2 | No additional fixed charge | $0 | $0 | $0 | $0 |
+| **ECR subtotal** | | | **$0** | **$0** | **$0** | **$0** |
+
+### Notes
+
+- Empty private ECR repositories do not incur a fixed hourly charge.
+- Image storage is billed based on actual storage usage. At the example rate of ~$0.10 per GB-month, storing 1 GB for a full month would cost approximately $0.10.
+- Basic image scanning is configured on push. Enhanced scanning through Amazon Inspector may incur additional charges if enabled at the registry level.
+- Lifecycle policies retain the 10 most recent images in each repository to control storage growth.
+- Immutable tags prevent overwriting existing image versions.
+- `force_delete = true` is intended only for this temporary portfolio environment. Destroying a nonempty repository also deletes its images.
+- Image pulls and pushes may incur related network charges, including NAT Gateway processing fees, which are excluded from the idle baseline.
+- Actual Frankfurt storage pricing should be verified before deployment.
+
+**Sources:** [Amazon ECR pricing](https://aws.amazon.com/ecr/pricing/), [ECR lifecycle policies](https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html), [ECR image scanning](https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html).
+
 ### Combined infrastructure baseline
 
 | Component | Hourly | 8 hours | 24 hours | 30 days (720h) |
@@ -197,6 +226,7 @@ Pod Identity association for the Cluster Autoscaler.
 | EKS and managed node group | ~$0.338 | $2.70 | $8.11 | $243.31 |
 | EKS addons and controller IAM configuration | $0 | $0 | $0 | $0 |
 | RDS PostgreSQL Multi-AZ | ~$0.157 | $1.26 | $3.77 | $113.16 |
+| Amazon ECR (empty repositories) | $0 | $0 | $0 | $0 |
 | **Total** | **~$0.609** | **$4.87** | **$14.62** | **$438.55** |
 
 Totals represent estimated provisioned idle resources, excluding usage-based charges and components not yet configured.

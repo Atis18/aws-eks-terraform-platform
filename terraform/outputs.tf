@@ -12,3 +12,11 @@ output "rds_database_name" {
   description = "Application database name"
   value       = aws_db_instance.postgres.db_name
 }
+
+output "ecr_repository_urls" {
+  description = "Private ECR repository URLs for the application"
+  value = {
+    for name, repository in aws_ecr_repository.app :
+    name => repository.repository_url
+  }
+}
