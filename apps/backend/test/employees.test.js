@@ -2,8 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { once } from "node:events";
 
-import app from "../src/app.js";
 import { pool } from "../src/db.js";
+import { createApp } from "../src/app.js";
+
+const app = createApp({
+  authMiddleware: (_req, _res, next) => next(),
+});
 
 test("GET /api/employees returns mapped employee list", async (t) => {
   const created = "2026-10-20T12:00:00.000Z";

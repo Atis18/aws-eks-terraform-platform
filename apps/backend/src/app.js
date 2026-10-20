@@ -1,9 +1,13 @@
 import express from "express";
 import { pool } from "./db.js";
+import { requireAuth } from "./auth.js";
 
 const uuidPattern =/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const app = express();
+export function createApp({
+  authMiddleware = requireAuth(),
+} = {}) {
+  const app = express();
 
 app.disable("x-powered-by");
 app.use(express.json());
@@ -22,6 +26,11 @@ app.get("/api/ready", async (_req, res) => {
     res.status(503).json({ status: "unavailable" });
   }
 });
+
+app.use(
+    ["/api/equipments", "/api/employees"],
+    authMiddleware
+  );
 
 app.get("/api/equipments", async (_req, res) => {
   try {
@@ -632,4 +641,7 @@ app.delete("/api/employees/:id", async (req, res) => {
   }
 });
 
-export default app;
+  return app;
+}
+
+export default createApp();

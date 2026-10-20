@@ -2,8 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { once } from "node:events";
 
-import app from "../src/app.js";
 import { pool } from "../src/db.js";
+import { createApp } from "../src/app.js";
+
+const app = createApp({
+  authMiddleware: (_req, _res, next) => next(),
+});
 
 test("GET /api/equipments returns equipment list", async (t) => {
   const equipment = {
