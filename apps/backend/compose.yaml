@@ -19,6 +19,18 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+      
+  backend:
+    build: .
+    ports:
+      - "127.0.0.1:3001:3000"
+    env_file:
+      - .env.local
+    environment:
+      PGHOST: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:
