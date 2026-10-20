@@ -1,3 +1,4 @@
+# Terraform
 .terraform/
 *.tfstate
 *.tfstate.*
@@ -6,3 +7,18 @@
 *.tfplan
 crash.log
 crash.*.log
+
+# Node.js / React
+node_modules/
+dist/
+coverage/
+*.log
+
+# Environment files
+.env
+.env.*
+!.env.sample
+
+# IDE
+.idea/
+.vscode/
