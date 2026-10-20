@@ -1,6 +1,8 @@
 import express from "express";
 import { pool } from "./db.js";
 
+const uuidPattern =/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const app = express();
 
 app.disable("x-powered-by");
@@ -77,9 +79,6 @@ app.post("/api/equipments", async (req, res) => {
 app.get("/api/equipments/:id", async (req, res) => {
   const { id } = req.params;
 
-  const uuidPattern =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
   if (!uuidPattern.test(id)) {
     return res.status(400).json({
       error: "Invalid equipment ID.",
@@ -106,6 +105,83 @@ app.get("/api/equipments/:id", async (req, res) => {
 
     return res.status(500).json({
       error: "Failed to load equipment.",
+    });
+  }
+});
+
+app.patch("/api/equipments/:id", async (req, res) => {
+  const { id } = req.params;
+  const data = req.body;
+
+  if (!uuidPattern.test(id)) {
+    return res.status(400).json({
+      error: "Invalid equipment ID.",
+    });
+  }
+
+  const allowedFields = ["name", "type", "amount"];
+
+  if (
+    !data ||
+    typeof data !== "object" ||
+    Array.isArray(data) ||
+    Object.keys(data).length === 0 ||
+    Object.keys(data).some((key) => !allowedFields.includes(key))
+  ) {
+    return res.status(400).json({
+      error: "Invalid equipment data.",
+    });
+  }
+
+  const { name, type, amount } = data;
+
+  if (
+    (name !== undefined &&
+      (typeof name !== "string" ||
+        !name.trim() ||
+        name.trim().length > 150)) ||
+    (type !== undefined &&
+      (typeof type !== "string" ||
+        !type.trim() ||
+        type.trim().length > 100)) ||
+    (amount !== undefined &&
+      (!Number.isInteger(amount) ||
+        amount < 0 ||
+        amount > 2147483647))
+  ) {
+    return res.status(400).json({
+      error: "Invalid equipment data.",
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE equipments
+       SET name = COALESCE($2, name),
+           type = COALESCE($3, type),
+           amount = COALESCE($4, amount)
+       WHERE id = $1
+       RETURNING id, name, type, amount, created`,
+      [
+        id,
+        name?.trim() ?? null,
+        type?.trim() ?? null,
+        amount ?? null,
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: "Equipment not found.",
+      });
+    }
+
+    return res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Failed to update equipment:", error);
+
+    return res.status(500).json({
+      error: "Failed to update equipment.",
     });
   }
 });

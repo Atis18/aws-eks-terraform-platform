@@ -189,3 +189,79 @@ test("GET /api/equipments/:id returns 404 when not found", async (t) => {
     });
   });
 });
+
+test("PATCH /api/equipments/:id updates equipment", async (t) => {
+  const updatedEquipment = {
+    id: equipmentId,
+    name: "Laptop",
+    type: "Computer",
+    amount: 5,
+  };
+
+  t.mock.method(pool, "query", async (sql, params) => {
+    assert.match(sql, /UPDATE equipments/i);
+    assert.deepEqual(params, [equipmentId, null, null, 5]);
+
+    return { rows: [updatedEquipment] };
+  });
+
+  await withServer(async (url) => {
+    const response = await fetch(
+      `${url}/api/equipments/${equipmentId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: 5 }),
+      }
+    );
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), updatedEquipment);
+  });
+});
+
+test("PATCH /api/equipments/:id rejects negative amount", async (t) => {
+  const query = t.mock.method(pool, "query", async () => {
+    throw new Error("Database should not be called");
+  });
+
+  await withServer(async (url) => {
+    const response = await fetch(
+      `${url}/api/equipments/${equipmentId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: -10 }),
+      }
+    );
+
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), {
+      error: "Invalid equipment data.",
+    });
+
+    assert.equal(query.mock.callCount(), 0);
+  });
+});
+
+test("PATCH /api/equipments/:id returns 404 when not found", async (t) => {
+  t.mock.method(pool, "query", async () => ({
+    rows: [],
+  }));
+
+  await withServer(async (url) => {
+    const response = await fetch(
+      `${url}/api/equipments/${equipmentId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: 5 }),
+      }
+    );
+
+    assert.equal(response.status, 404);
+    assert.deepEqual(await response.json(), {
+      error: "Equipment not found.",
+    });
+  });
+});
