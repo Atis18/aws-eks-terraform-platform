@@ -601,4 +601,35 @@ app.patch("/api/employees/:id", async (req, res) => {
   }
 });
 
+app.delete("/api/employees/:id", async (req, res) => {
+  const { id } = req.params;
+
+  if (!uuidPattern.test(id)) {
+    return res.status(400).json({
+      error: "Invalid employee ID.",
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      "DELETE FROM employees WHERE id = $1",
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        error: "Employee not found.",
+      });
+    }
+
+    return res.status(204).send();
+  } catch (error) {
+    console.error("Failed to delete employee:", error);
+
+    return res.status(500).json({
+      error: "Failed to delete employee.",
+    });
+  }
+});
+
 export default app;
