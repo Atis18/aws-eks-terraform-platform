@@ -132,6 +132,33 @@ An idle infrastructure still incurs charges for many **provisioned** resources. 
 
 **Sources:** [AWS Load Balancer Controller documentation](https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html), [AWS Elastic Load Balancing pricing](https://aws.amazon.com/elasticloadbalancing/pricing/).
 
+## 5. Cluster Autoscaler — IAM preparation
+
+**Terraform component:** `terraform/cluster-autoscaler.tf`
+
+**Architecture:** Dedicated IAM role and policy with an EKS
+Pod Identity association for the Cluster Autoscaler.
+
+### Provisioned resources and idle baseline
+
+| Resource | Quantity | Unit price | 1 hour | 8 hours | 24 hours | 30 days (720h) |
+|---|---:|---:|---:|---:|---:|---:|
+| IAM role | 1 | No additional charge | $0 | $0 | $0 | $0 |
+| IAM policy and attachment | 1 each | No additional charge | $0 | $0 | $0 | $0 |
+| EKS Pod Identity association | 1 | No additional charge | $0 | $0 | $0 | $0 |
+| **Subtotal** | | | **$0** | **$0** | **$0** | **$0** |
+
+### Notes
+
+- This step configures IAM permissions only.
+- The Cluster Autoscaler will be deployed later using Helm.
+- The controller runs on existing worker-node capacity.
+- Scaling above two nodes increases EC2 and EBS costs.
+- The current baseline assumes two worker nodes and is unchanged.
+
+**Sources:** [Amazon EKS pricing](https://aws.amazon.com/eks/pricing/),
+[AWS EKS autoscaling best practices](https://aws.github.io/aws-eks-best-practices/cluster-autoscaling/).
+
 ### Combined infrastructure baseline
 
 | Component | Hourly | 8 hours | 24 hours | 30 days |
