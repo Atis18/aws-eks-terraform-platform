@@ -265,3 +265,56 @@ test("PATCH /api/equipments/:id returns 404 when not found", async (t) => {
     });
   });
 });
+
+test("DELETE /api/equipments/:id deletes equipment", async (t) => {
+  t.mock.method(pool, "query", async (sql, params) => {
+    assert.match(sql, /DELETE FROM equipments/i);
+    assert.deepEqual(params, [equipmentId]);
+
+    return { rowCount: 1 };
+  });
+
+  await withServer(async (url) => {
+    const response = await fetch(
+      `${url}/api/equipments/${equipmentId}`,
+      { method: "DELETE" }
+    );
+
+    assert.equal(response.status, 204);
+    assert.equal(await response.text(), "");
+  });
+});
+
+test("DELETE /api/equipments/:id rejects invalid UUID", async (t) => {
+  const query = t.mock.method(pool, "query", async () => {
+    throw new Error("Database should not be called");
+  });
+
+  await withServer(async (url) => {
+    const response = await fetch(
+      `${url}/api/equipments/invalid-id`,
+      { method: "DELETE" }
+    );
+
+    assert.equal(response.status, 400);
+    assert.equal(query.mock.callCount(), 0);
+  });
+});
+
+test("DELETE /api/equipments/:id returns 404 when not found", async (t) => {
+  t.mock.method(pool, "query", async () => ({
+    rowCount: 0,
+  }));
+
+  await withServer(async (url) => {
+    const response = await fetch(
+      `${url}/api/equipments/${equipmentId}`,
+      { method: "DELETE" }
+    );
+
+    assert.equal(response.status, 404);
+    assert.deepEqual(await response.json(), {
+      error: "Equipment not found.",
+    });
+  });
+});

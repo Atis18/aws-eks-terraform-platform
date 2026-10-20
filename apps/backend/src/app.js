@@ -186,4 +186,35 @@ app.patch("/api/equipments/:id", async (req, res) => {
   }
 });
 
+app.delete("/api/equipments/:id", async (req, res) => {
+  const { id } = req.params;
+
+  if (!uuidPattern.test(id)) {
+    return res.status(400).json({
+      error: "Invalid equipment ID.",
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      "DELETE FROM equipments WHERE id = $1",
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        error: "Equipment not found.",
+      });
+    }
+
+    return res.status(204).send();
+  } catch (error) {
+    console.error("Failed to delete equipment:", error);
+
+    return res.status(500).json({
+      error: "Failed to delete equipment.",
+    });
+  }
+});
+
 export default app;
