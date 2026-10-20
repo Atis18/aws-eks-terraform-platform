@@ -119,3 +119,73 @@ test("POST /api/equipments rejects negative amount", async (t) => {
     });
   }
 });
+
+const withServer = async (callback) => {
+  const server = app.listen(0, "127.0.0.1");
+
+  try {
+    await once(server, "listening");
+
+    const url = `http://127.0.0.1:${server.address().port}`;
+    await callback(url);
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => error ? reject(error) : resolve());
+    });
+  }
+};
+
+const equipmentId = "66227f26-85d0-478d-bc4e-86cf09949250";
+
+test("GET /api/equipments/:id returns equipment", async (t) => {
+  const equipment = {
+    id: equipmentId,
+    name: "Laptop",
+    type: "Computer",
+    amount: 3,
+  };
+
+  t.mock.method(pool, "query", async (sql, params) => {
+    assert.match(sql, /WHERE id = \$1/i);
+    assert.deepEqual(params, [equipmentId]);
+    return { rows: [equipment] };
+  });
+
+  await withServer(async (url) => {
+    const response = await fetch(`${url}/api/equipments/${equipmentId}`);
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), equipment);
+  });
+});
+
+test("GET /api/equipments/:id rejects invalid UUID", async (t) => {
+  const query = t.mock.method(pool, "query", async () => {
+    throw new Error("Database should not be called");
+  });
+
+  await withServer(async (url) => {
+    const response = await fetch(`${url}/api/equipments/invalid-id`);
+
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), {
+      error: "Invalid equipment ID.",
+    });
+    assert.equal(query.mock.callCount(), 0);
+  });
+});
+
+test("GET /api/equipments/:id returns 404 when not found", async (t) => {
+  t.mock.method(pool, "query", async () => ({
+    rows: [],
+  }));
+
+  await withServer(async (url) => {
+    const response = await fetch(`${url}/api/equipments/${equipmentId}`);
+
+    assert.equal(response.status, 404);
+    assert.deepEqual(await response.json(), {
+      error: "Equipment not found.",
+    });
+  });
+});

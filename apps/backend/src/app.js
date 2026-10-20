@@ -74,4 +74,40 @@ app.post("/api/equipments", async (req, res) => {
   }
 });
 
+app.get("/api/equipments/:id", async (req, res) => {
+  const { id } = req.params;
+
+  const uuidPattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  if (!uuidPattern.test(id)) {
+    return res.status(400).json({
+      error: "Invalid equipment ID.",
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT id, name, type, amount, created
+       FROM equipments
+       WHERE id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: "Equipment not found.",
+      });
+    }
+
+    return res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Failed to load equipment:", error);
+
+    return res.status(500).json({
+      error: "Failed to load equipment.",
+    });
+  }
+});
+
 export default app;
