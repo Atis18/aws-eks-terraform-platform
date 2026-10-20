@@ -217,4 +217,46 @@ app.delete("/api/equipments/:id", async (req, res) => {
   }
 });
 
+app.get("/api/employees", async (_req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        e.id,
+        e.first_name,
+        e.middle_name,
+        e.last_name,
+        e.full_name,
+        e.position,
+        e.level,
+        COALESCE(eq.name, 'N/A') AS equipment,
+        e.created
+      FROM employees e
+      LEFT JOIN equipments eq ON eq.id = e.equipment_id
+      ORDER BY e.created DESC, e.id DESC
+    `);
+
+    const employees = result.rows.map((row) => ({
+      id: row.id,
+      name: {
+        firstName: row.first_name,
+        middleName: row.middle_name ?? "",
+        lastName: row.last_name,
+      },
+      fullName: row.full_name,
+      position: row.position,
+      level: row.level,
+      equipment: row.equipment,
+      created: row.created,
+    }));
+
+    return res.json(employees);
+  } catch (error) {
+    console.error("Failed to load employees:", error);
+
+    return res.status(500).json({
+      error: "Failed to load employees.",
+    });
+  }
+});
+
 export default app;
