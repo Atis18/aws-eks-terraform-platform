@@ -4,7 +4,9 @@ import { getAllEquipments } from "../../client/equipments";
 const EmployeeForm = ({ onSave, disabled = false, employee, onCancel }) => {
   const [equipments, setEquipments] = useState([]);
   const [selectedEquipment, setSelectedEquipment] = useState(
-    !employee?.equipment || employee.equipment.toLowerCase() === "n/a" ? "N/A" : employee.equipment.toLowerCase()
+    !employee?.equipment || employee.equipment.toLowerCase() === "n/a"
+      ? "N/A"
+      : employee.equipment
   );
   const [equipmentError, setEquipmentError] = useState("");
 
@@ -105,8 +107,8 @@ const EmployeeForm = ({ onSave, disabled = false, employee, onCancel }) => {
         {equipmentError && <div className="text-danger" role="alert">{equipmentError}</div>}
         <select className="form-control" name="equipment" value={selectedEquipment} onChange={(e) => setSelectedEquipment(e.target.value)}>
           <option value="N/A">None</option>
-          {equipments.map(equipment => (<option key={equipment.name} value={equipment.name.toLowerCase()}>{equipment.name}</option>))}
-        </select >
+          {equipments.map((equipment) => (<option key={equipment.id} value={equipment.name}>{equipment.name}</option>))}
+        </select>
       </div>
 
       <div className="d-flex justify-content-start gap-3">

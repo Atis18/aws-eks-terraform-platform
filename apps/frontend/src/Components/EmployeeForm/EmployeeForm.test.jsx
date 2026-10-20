@@ -18,7 +18,7 @@ describe("employee form", () => {
     await user.type(screen.getByLabelText("Level:"), "Junior");
     await user.type(screen.getByLabelText("Position:"), "Engineer");
     await screen.findByRole("option", { name: "Laptop" });
-    await user.selectOptions(screen.getByRole("combobox"), "laptop");
+    await user.selectOptions(screen.getByRole("combobox"), "Laptop");
     await user.click(screen.getByRole("button", { name: "Create Employee" }));
 
     expect(onSave).toHaveBeenCalledWith({
@@ -26,7 +26,7 @@ describe("employee form", () => {
       name: { firstName: "Robert", middleName: "", lastName: "Brown" },
       position: "Engineer",
       level: "Junior",
-      equipment: "laptop",
+      equipment: "Laptop",
     });
   });
 
