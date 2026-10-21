@@ -53,7 +53,9 @@ module "eks" {
         before_compute = true
       }
 
-      "eks-pod-identity-agent" = {}
+      eks-pod-identity-agent = {
+        before_compute = true
+      }
     }
   }
 
