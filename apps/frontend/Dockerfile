@@ -14,15 +14,13 @@ ARG VITE_FB_projectId
 ARG VITE_FB_storageBucket
 ARG VITE_FB_messagingSenderId
 ARG VITE_FB_appId
-ARG VITE_FB_DATABASE_URL
 
 ENV VITE_FB_apiKey=${VITE_FB_apiKey} \
     VITE_FB_authDomain=${VITE_FB_authDomain} \
     VITE_FB_projectId=${VITE_FB_projectId} \
     VITE_FB_storageBucket=${VITE_FB_storageBucket} \
     VITE_FB_messagingSenderId=${VITE_FB_messagingSenderId} \
-    VITE_FB_appId=${VITE_FB_appId} \
-    VITE_FB_DATABASE_URL=${VITE_FB_DATABASE_URL}
+    VITE_FB_appId=${VITE_FB_appId}
 
 RUN npm run build
 
