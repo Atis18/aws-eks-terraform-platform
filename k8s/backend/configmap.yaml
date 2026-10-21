@@ -7,5 +7,5 @@ metadata:
     component: backend
 data:
   PGHOST: "REPLACE_WITH_RDS_ENDPOINT"
-  PGDATABASE: "REPLACE_WITH_DATABASE_NAME"
-  FIREBASE_PROJECT_ID: "REPLACE_WITH_FIREBASE_PROJECT_ID"
+  PGDATABASE: "appdb"
+  FIREBASE_PROJECT_ID: "employee-madness-platform"

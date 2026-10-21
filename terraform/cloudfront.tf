@@ -1,5 +1,5 @@
 locals {
-  cloudfront_no_cache_policy_id = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
+  cloudfront_no_cache_policy_id        = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
   cloudfront_all_viewer_except_host_id = "b689b0a8-53d0-40ab-baf2-68738e2966ac"
 }
 
@@ -60,7 +60,7 @@ resource "aws_cloudfront_distribution" "app" {
     allowed_methods = ["GET", "HEAD", "OPTIONS"]
     cached_methods  = ["GET", "HEAD"]
 
-    cache_policy_id = local.cloudfront_no_cache_policy_id
+    cache_policy_id          = local.cloudfront_no_cache_policy_id
     origin_request_policy_id = local.cloudfront_all_viewer_except_host_id
 
     compress = true
@@ -79,7 +79,7 @@ resource "aws_cloudfront_distribution" "app" {
 
     cached_methods = ["GET", "HEAD"]
 
-    cache_policy_id = local.cloudfront_no_cache_policy_id
+    cache_policy_id          = local.cloudfront_no_cache_policy_id
     origin_request_policy_id = local.cloudfront_all_viewer_except_host_id
 
     compress = true

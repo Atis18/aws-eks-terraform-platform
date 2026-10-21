@@ -39,3 +39,8 @@ output "cloudfront_url" {
     : null
   )
 }
+
+output "vpc_id" {
+  description = "VPC ID for the AWS Load Balancer Controller"
+  value       = module.vpc.vpc_id
+}

@@ -1,3 +1,6 @@
+clusterName: eks-portfolio-eks
+region: eu-central-1
+
 replicaCount: 2
 
 serviceAccount:

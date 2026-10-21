@@ -1,5 +1,10 @@
 cloudProvider: aws
 
+autoDiscovery:
+  clusterName: eks-portfolio-eks
+
+awsRegion: eu-central-1
+
 image:
   tag: v1.36.1
 

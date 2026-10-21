@@ -25,10 +25,10 @@ resource "aws_vpc_security_group_ingress_rule" "rds_from_eks" {
 resource "aws_db_instance" "postgres" {
   identifier = "${var.project_name}-postgres"
 
-  engine                  = "postgres"
-  engine_version          = "17"
+  engine                   = "postgres"
+  engine_version           = "17"
   engine_lifecycle_support = "open-source-rds-extended-support-disabled"
-  instance_class          = "db.t4g.medium"
+  instance_class           = "db.t4g.medium"
 
   db_name  = "appdb"
   username = "dbadmin"
@@ -49,7 +49,7 @@ resource "aws_db_instance" "postgres" {
 
   iam_database_authentication_enabled = true
 
-  backup_retention_period = 1
+  backup_retention_period    = 1
   auto_minor_version_upgrade = true
 
   deletion_protection = false
