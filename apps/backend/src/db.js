@@ -1,11 +1,30 @@
+import { readFileSync } from "node:fs";
 import pg from "pg";
 
 const { Pool } = pg;
 
-export const pool = new Pool({
-  host: process.env.PGHOST,
-  port: Number(process.env.PGPORT ?? 5432),
-  database: process.env.PGDATABASE,
-  user: process.env.PGUSER,
-  password: process.env.PGPASSWORD,
-});
+export const createPoolConfig = (env = process.env) => {
+  const config = {
+    host: env.PGHOST,
+    port: Number(env.PGPORT ?? 5432),
+    database: env.PGDATABASE,
+    user: env.PGUSER,
+    password: env.PGPASSWORD,
+    ssl: false,
+  };
+
+  if (env.PGSSL === "true") {
+    if (!env.PGSSLROOTCERT) {
+      throw new Error("PGSSLROOTCERT is required when PGSSL=true.");
+    }
+
+    config.ssl = {
+      ca: readFileSync(env.PGSSLROOTCERT, "utf8"),
+      rejectUnauthorized: true,
+    };
+  }
+
+  return config;
+};
+
+export const pool = new Pool(createPoolConfig());

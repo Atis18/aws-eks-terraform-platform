@@ -34,6 +34,12 @@ spec:
             - name: PGPORT
               value: "5432"
 
+            - name: PGSSL
+              value: "true"
+
+            - name: PGSSLROOTCERT
+              value: "/app/certs/eu-central-1-bundle.pem"
+
             - name: PGDATABASE
               valueFrom:
                 configMapKeyRef:

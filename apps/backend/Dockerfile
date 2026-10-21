@@ -10,6 +10,8 @@ RUN npm ci --omit=dev
 
 COPY src/ ./src/
 
+COPY certs/ ./certs/
+
 USER node
 
 EXPOSE 3000
