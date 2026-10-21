@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: employee-madness-frontend
+  labels:
+    app: employee-madness
+    component: frontend
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: employee-madness
+      component: frontend
+
+  template:
+    metadata:
+      labels:
+        app: employee-madness
+        component: frontend
+
+    spec:
+      containers:
+        - name: frontend
+          image: REPLACE_WITH_FRONTEND_ECR_IMAGE
+
+          ports:
+            - name: http
+              containerPort: 80
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi

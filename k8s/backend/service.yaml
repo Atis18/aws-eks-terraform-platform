@@ -5,6 +5,8 @@ metadata:
   labels:
     app: employee-madness
     component: backend
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /api/ready
 spec:
   type: ClusterIP
   selector:
