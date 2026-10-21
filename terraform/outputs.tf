@@ -30,3 +30,12 @@ output "ecr_repository_urls" {
     name => repository.repository_url
   }
 }
+
+output "cloudfront_url" {
+  description = "Public HTTPS URL of the application"
+  value = (
+    var.enable_cloudfront
+    ? "https://${aws_cloudfront_distribution.app[0].domain_name}"
+    : null
+  )
+}

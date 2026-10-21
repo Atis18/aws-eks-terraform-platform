@@ -26,3 +26,21 @@ variable "eks_admin_cidr" {
     error_message = "Enter a valid IPv4 /32 CIDR, or leave it empty for automatic detection."
   }
 }
+
+variable "enable_cloudfront" {
+  description = "Create CloudFront after the internal ALB is available"
+  type        = bool
+  default     = false
+}
+
+variable "cloudfront_alb_arn" {
+  description = "ARN of the internal ALB created by the Kubernetes Ingress"
+  type        = string
+  default     = ""
+}
+
+variable "cloudfront_alb_dns_name" {
+  description = "DNS hostname of the internal ALB, without http://"
+  type        = string
+  default     = ""
+}

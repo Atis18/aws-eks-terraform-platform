@@ -6,9 +6,10 @@ metadata:
   labels:
     app: employee-madness
   annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/scheme: internet
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+    alb.ingress.kubernetes.io/security-group-prefix-lists: "pl-a3a144ca"
 spec:
   ingressClassName: alb
   rules:
