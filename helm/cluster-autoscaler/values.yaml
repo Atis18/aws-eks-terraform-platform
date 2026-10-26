@@ -10,12 +10,11 @@ image:
 
 replicaCount: 1
 
-serviceAccount:
-  create: true
-  name: cluster-autoscaler
-
 rbac:
   create: true
+  serviceAccount:
+    create: true
+    name: cluster-autoscaler
 
 resources:
   requests:
