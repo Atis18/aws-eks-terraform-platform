@@ -1,0 +1,10 @@
+aws_region   = "eu-central-1"
+project_name = "eks-portfolio"
+
+# Replace with your public IPv4 /32. An empty string uses checkip.amazonaws.com.
+eks_admin_cidr = ""
+
+# Enable only after the Kubernetes Ingress has created an internal ALB.
+enable_cloudfront = false
+# cloudfront_alb_arn      = "arn:aws:elasticloadbalancing:eu-central-1:ACCOUNT_ID:loadbalancer/app/..."
+# cloudfront_alb_dns_name = "internal-....eu-central-1.elb.amazonaws.com"

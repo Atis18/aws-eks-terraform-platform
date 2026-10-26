@@ -12,6 +12,8 @@ crash.*.log
 node_modules/
 dist/
 coverage/
+__pycache__/
+.venv/
 *.log
 
 # Environment files

@@ -1,6 +1,11 @@
 clusterName: eks-portfolio-eks
 region: eu-central-1
 
+controllerConfig:
+  featureGates:
+    ALBGatewayAPI: false
+    NLBGatewayAPI: false
+
 replicaCount: 2
 
 serviceAccount:

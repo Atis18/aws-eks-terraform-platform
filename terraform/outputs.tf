@@ -1,3 +1,13 @@
+output "cluster_name" {
+  description = "EKS cluster name for kubeconfig and controller installation"
+  value       = module.eks.cluster_name
+}
+
+output "aws_region" {
+  description = "AWS region for CLI commands and Helm controllers"
+  value       = var.aws_region
+}
+
 output "eks_api_allowed_cidr" {
   description = "Public IPv4 CIDR allowed to access the EKS API endpoint"
   value       = local.eks_admin_cidr
