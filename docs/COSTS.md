@@ -1,8 +1,10 @@
 # AWS Infrastructure Cost Estimate
 
-> **Status:** Work in progress
+> **Status:** Planning estimate; recheck current regional prices before provisioning.
 >
 > These are **estimated idle infrastructure costs, not an AWS bill or a guarantee of pricing**.
+
+The numeric baseline below was last reviewed on 2026-10-20. It does **not** include the internal ALB or optional CloudFront distribution now defined by the repository, nor usage-based charges. Treat it as a partial baseline, not the total cost of the complete deployment. Controller/application deployment status is not established by this estimate; follow the [current deployment runbook](DEPLOYMENT.md).
 
 ## Assumptions
 

@@ -16,14 +16,14 @@ Connect to the `appdb` database as `dbadmin`.
 
 Run the migrations in order:
 
-1. `db/migrations/001_create_equipments.sql`
-2. `db/migrations/002_create_employees.sql`
+1. `apps/backend/db/migrations/001_create_equipments.sql`
+2. `apps/backend/db/migrations/002_create_employees.sql`
 
 ## 2. Create the application database user
 
 Run:
 
-`db/initialization/001_create_app_user.sql`
+`apps/backend/db/initialization/001_create_app_user.sql`
 
 This creates the `appuser` role and grants access to the application
 tables without database administrator privileges.
